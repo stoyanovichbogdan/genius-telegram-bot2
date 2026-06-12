@@ -1,33 +1,53 @@
-import os
-import requests
 import telebot
+import requests
 
-# Беремо токен з налаштувань сервера (так безпечніше) або вставте вручну
-TOKEN = os.getenv("BOT_TOKEN", "8932957182:AAFY-nyjA9uyZ6oyVBMX24O7E8dRh5uRg5Q")
-bot = telebot.TeleBot(TOKEN)
+# ================= НАЛАШТУВАННЯ =================
+# Встав сюди свій токен від BotFather
+TELEGRAM_TOKEN = 'ТВІЙ_ТОКЕН_ВІД_BOTFATHER'
 
-# Налаштування вашого ШІ FlowiseAI
-API_URL = "https://cloud.flowiseai.com/api/v1/prediction/bcbe9834-1547-4656-b4a0-d3446e14f571"
+# Встав сюди URL свого Flowise (з вікна API Endpoint)
+FLOWISE_API_URL = 'http://localhost:3000/api/v1/prediction/ТВІЙ_ID_ФЛОУ'
+# ================================================
 
+bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
-def ask_ai(question_text):
-    try:
-        response = requests.post(API_URL, json={"question": question_text})
-        result = response.json()
-        return result.get(
-            "text", result.get("output", "Не вдалося отримати текст відповіді.")
-        )
-    except Exception as e:
-        return f"Помилка ШІ: {str(e)}"
-
-
-# Обробник усіх текстових повідомлень
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
-    ai_response = ask_ai(message.text)
-    bot.reply_to(message, ai_response)
+    user_text = message.text
+    chat_id = message.chat.id
+    
+    # Показуємо статус "друкує...", щоб користувач бачив, що бот думає
+    bot.send_chat_action(chat_id, 'typing')
+    
+    # Формуємо запит для Flowise
+    payload = {
+        "question": user_text,
+        # sessionId передає унікальний ID чату, щоб пам'ять працювала для кожного користувача окремо
+        "overrideConfig": {
+            "sessionId": str(chat_id) 
+        }
+    }
+    
+    try:
+        # Відправляємо повідомлення до Flowise
+        response = requests.post(FLOWISE_API_URL, json=payload)
+        response.raise_for_status() # Перевіряємо, чи немає помилок HTTP
+        
+        response_data = response.json()
+        
+        # Витягуємо текст відповіді
+        bot_reply = response_data.get('text', 'Вибач, я не зміг згенерувати відповідь.')
+        
+        # Надсилаємо відповідь користувачу в Telegram
+        bot.send_message(chat_id, bot_reply)
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Помилка запиту до Flowise: {e}")
+        bot.send_message(chat_id, "Ой, мій мозок (Flowise) зараз недоступний. Перевір, чи він запущений!")
+    except Exception as e:
+        print(f"Невідома помилка: {e}")
+        bot.send_message(chat_id, "Щось пішло не так під час обробки повідомлення.")
 
-
-if __name__ == "__main__":
-    print("Бот успішно запущений в режимі Polling...")
-    bot.infinity_polling()
+# Запускаємо бота
+print("🤖 Бот успішно запущений! Напиши йому в Telegram.")
+bot.infinity_polling()
