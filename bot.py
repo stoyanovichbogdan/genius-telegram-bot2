@@ -3,7 +3,7 @@ import requests
 
 # ================= НАЛАШТУВАННЯ =================
 # Встав сюди свій токен від BotFather
-TELEGRAM_TOKEN = 'ТВІЙ_ТОКЕН_ВІД_BOTFATHER'
+TELEGRAM_TOKEN = '8932957182:AAFY-nyjA9uyZ6oyVBMX24O7E8dRh5uRg5Q'
 
 # Встав сюди URL свого Flowise (з вікна API Endpoint)
 FLOWISE_API_URL = 'http://localhost:3000/api/v1/prediction/ТВІЙ_ID_ФЛОУ'
