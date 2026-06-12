@@ -6,7 +6,7 @@ import requests
 TELEGRAM_TOKEN = '8932957182:AAFY-nyjA9uyZ6oyVBMX24O7E8dRh5uRg5Q'
 
 # Встав сюди URL свого Flowise (з вікна API Endpoint)
-FLOWISE_API_URL = 'http://localhost:3000/api/v1/prediction/ТВІЙ_ID_ФЛОУ'
+FLOWISE_API_URL = "https://cloud.flowiseai.com/api/v1/prediction/bcbe9834-1547-4656-b4a0-d3446e14f571"
 # ================================================
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
