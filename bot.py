@@ -2,7 +2,7 @@ import os
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
-# Бот автоматично візьме токен із налаштувань (Variables) на Railway.
+# Бот бере токен з Variables на Railway
 TELEGRAM_TOKEN = os.getenv("BOT_TOKEN")
 
 if not TELEGRAM_TOKEN:
@@ -10,15 +10,23 @@ if not TELEGRAM_TOKEN:
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
-# ⚠️ ВСТАВТЕ СЮДИ ВАШЕ ПОСИЛАННЯ, ЯКЕ ВИЙШЛО ПІСЛЯ УКЛЮЧЕННЯ GITHUB PAGES
-# Приклад: "https://bogdan25.github.io/genius-bot/"
+# --- ОЦЕЙ БЛОК ВИРІШИТЬ ПОМИЛКУ 409 КОНФЛІКТУ ---
+try:
+    print("🧹 Очищення старих сесій та вебхуків Telegram...")
+    bot.delete_webhook(drop_pending_updates=True)
+    print("✅ Сесію успішно очищено!")
+except Exception as e:
+    print(f"⚠️ Попередження під час очищення: {e}")
+# ------------------------------------------------
+
+# Ваше посилання на готовий WebApp сайт
 WEBAPP_URL = "https://stoyanovichbogdan.github.io/genius-telegram-bot2/"
 
 @bot.message_handler(commands=['start'])
 def start_command(message):
     markup = InlineKeyboardMarkup()
     
-    # Створюємо спеціальну кнопку WebApp для відкриття нашого вікна
+    # Кнопка для відкриття вашого гарного вікна
     webapp_button = InlineKeyboardButton(
         text="🚀 Відкрити ШІ-Вікно", 
         web_app=WebAppInfo(url=WEBAPP_URL)
