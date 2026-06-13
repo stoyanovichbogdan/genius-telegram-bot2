@@ -35,6 +35,7 @@
             padding: 10px;
             background-color: var(--panel-bg);
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            gap: 5px;
         }
         .btn {
             padding: 8px 12px;
@@ -45,12 +46,17 @@
             background-color: var(--btn-color);
             color: white;
             transition: opacity 0.2s;
+            flex: 1;
+            text-align: center;
+            white-space: nowrap;
         }
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
-        .btn-close { background-color: #ff3b30; }
+        .btn-clear { background-color: #ff9500; } /* Помаранчевий колір для очищення */
+        .btn-close { background-color: #ff3b30; max-width: 40px; } /* Червоний для закриття */
+        
         .chat-container {
             flex: 1;
             padding: 15px;
@@ -119,8 +125,9 @@
 <body>
 
     <div class="top-panel">
-        <button class="btn" onclick="toggleTheme()">🌓  Тема</button>
-        <button class="btn btn-close" onclick="closeApp()">❌ Закрити</button>
+        <button class="btn" onclick="toggleTheme()">🌓 Тема</button>
+        <button class="btn btn-clear" id="clearBtn" onclick="clearChat()">🗑️ Очистити</button>
+        <button class="btn btn-close" onclick="closeApp()">❌</button>
     </div>
 
     <div class="chat-container" id="chat">
@@ -136,9 +143,9 @@
         tg.ready();
         tg.expand();
 
-        let isAiThinking = false; // Прапорець, який показує, чи думає зараз ШІ
+        let isAiThinking = false;
 
-        // Завантажуємо історію, як тільки сайт відкрився
+        // Завантажуємо історію при старті
         window.onload = function() {
             loadChatHistory();
         };
@@ -153,23 +160,39 @@
             }
         }
 
+        // Функція ПОВНОГО очищення чату
+        function clearChat() {
+            if (isAiThinking) return; // Не дозволяємо чистити чат, поки ШІ відповідає
+            
+            if (confirm("Ви впевнені, що хочете очистити всю історію чату?")) {
+                // Видаляємо все з пам'яті браузера
+                localStorage.removeItem('saved_chat_html');
+                localStorage.removeItem('dify_conversation_id');
+                
+                // Скидаємо екран чату до початкового стану
+                const chat = document.getElementById('chat');
+                chat.innerHTML = `<div class="message bot">Історію успішно очищено! Про що хочеш поговорити тепер? 🚀</div>`;
+            }
+        }
+
         // Функція відправки повідомлення до Dify.ai
         async function sendMessage() {
-            if (isAiThinking) return; // Якщо ШІ вже відповідає, ігноруємо нові натискання
+            if (isAiThinking) return;
 
             const input = document.getElementById('msgInput');
             const sendBtn = document.getElementById('sendBtn');
+            const clearBtn = document.getElementById('clearBtn');
             const text = input.value.trim();
             if (!text) return;
 
-            // Додаємо повідомлення юзера на екран та зберігаємо в історію
             appendMessage(text, 'user');
             input.value = '';
 
-            // 🚫 БЛОКУЄМО поля вводу та кнопку
+            // Блокуємо елементи інтерфейсу
             isAiThinking = true;
             input.disabled = true;
             sendBtn.disabled = true;
+            clearBtn.disabled = true; // Блокуємо і кнопку очищення під час запиту
             input.placeholder = "ШІ думає над відповіддю...";
 
             showTypingIndicator();
@@ -177,7 +200,6 @@
             // ⚠️ ВСТАВТЕ СЮДИ ВАШ КЛЮЧ З DIFY (який починається на app-...)
             const DIFY_API_KEY = "app-kOUTSfhYF6yKO0Ibb7B3d3Nf"; 
 
-            // Дізнаємося, чи був у нас раніше відкритий діалог з Dify
             const savedConversationId = localStorage.getItem('dify_conversation_id') || "";
 
             try {
@@ -191,7 +213,7 @@
                         inputs: {},
                         query: text,
                         response_mode: "blocking",
-                        conversation_id: savedConversationId, // Передаємо ID старого чату, щоб ШІ все пам'ятав
+                        conversation_id: savedConversationId,
                         user: "tg_webapp_" + (tg.initDataUnsafe.user?.id || "default_user")
                     })
                 });
@@ -199,23 +221,22 @@
                 const data = await response.json();
                 removeTypingIndicator();
                 
-                // Якщо Dify створив новий ID бесіди або оновив його, запам'ятовуємо
                 if (data.conversation_id) {
                     localStorage.setItem('dify_conversation_id', data.conversation_id);
                 }
 
-                // Виводимо відповідь від Dify
                 appendMessage(data.answer || "Помилка відповіді від ШІ", 'bot');
             } catch (e) {
                 removeTypingIndicator();
                 appendMessage("Помилка зв'язку з ШІ", 'bot');
             } finally {
-                // ✅ РОЗБЛОКУЄМО поля після отримання відповіді
+                // Розблоковуємо інтерфейс
                 isAiThinking = false;
                 input.disabled = false;
                 sendBtn.disabled = false;
+                clearBtn.disabled = false;
                 input.placeholder = "Запитай у ШІ...";
-                input.focus(); // Повертаємо курсор у поле вводу
+                input.focus();
             }
         }
 
@@ -225,7 +246,6 @@
             chat.insertAdjacentHTML('beforeend', msgHtml);
             chat.scrollTop = chat.scrollHeight;
 
-            // Після кожного повідомлення перезаписуємо історію в пам'ять
             saveChatHistory();
         }
 
@@ -241,13 +261,11 @@
             if (indicator) indicator.remove();
         }
 
-        // Функція збереження всього HTML-вмісту чату в локальну пам'ять
         function saveChatHistory() {
             const chatContent = document.getElementById('chat').innerHTML;
             localStorage.setItem('saved_chat_html', chatContent);
         }
 
-        // Функція відновлення історії чату при старті
         function loadChatHistory() {
             const chat = document.getElementById('chat');
             const savedContent = localStorage.getItem('saved_chat_html');
@@ -256,7 +274,6 @@
                 chat.innerHTML = savedContent;
                 chat.scrollTop = chat.scrollHeight;
             } else {
-                // Якщо додаток відкрили вперше і історії немає — показуємо привітання
                 chat.innerHTML = `<div class="message bot">Привіт! Я твій новий ШІ-асистент. Наша історія тепер зберігається! 🚀</div>`;
             }
         }
