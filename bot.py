@@ -20,7 +20,7 @@ except Exception as e:
 # ------------------------------------------------
 
 # Ваше посилання на готовий WebApp сайт
-WEBAPP_URL = "https://stoyanovichbogdan.github.io/genius-telegram-bot2/"
+WEBAPP_URL = "https://stoyanovichbogdan.github.io/genius-telegram-bot2/?v=2"
 
 @bot.message_handler(commands=['start'])
 def start_command(message):
