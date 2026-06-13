@@ -115,6 +115,10 @@
         tg.ready(); // Кажемо Телеграму, що додаток завантажився
 
         // 1. Хрестик (Закрити додаток)
+        if (tg.BackButton) {
+            tg.BackButton.hide();
+        }
+
         function closeApp() {
             tg.close();
         }
@@ -124,15 +128,9 @@
             document.body.classList.toggle('light-theme');
         }
 
-        // 3. На весь екран (залежить від підтримки пристрою користувача)
+        // 3. На весь екран (Команда Telegram WebApp)
         function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    alert("Повний екран не підтримується на цьому пристрої");
-                });
-            } else {
-                document.exitFullscreen();
-            }
+            tg.expand();
         }
 
         // Функція відправки повідомлення до вашого Flowise
@@ -144,14 +142,13 @@
             appendMessage(text, 'user');
             input.value = '';
 
-            // Запит до вашого FlowiseAI
             try {
                 const response = await fetch("https://cloud.flowiseai.com/api/v1/prediction/bcbe9834-1547-4656-b4a0-d3446e14f571", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         question: text,
-                        overrideConfig: { sessionId: "tg_webapp_" + tg.initDataUnsafe.user?.id }
+                        overrideConfig: { sessionId: "tg_webapp_" + (tg.initDataUnsafe.user?.id || "default_user") }
                     })
                 });
                 const data = await response.json();
