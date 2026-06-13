@@ -54,8 +54,8 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
-        .btn-clear { background-color: #ff9500; } /* Помаранчевий колір для очищення */
-        .btn-close { background-color: #ff3b30; max-width: 40px; } /* Червоний для закриття */
+        .btn-clear { background-color: #ff9500; }
+        .btn-close { background-color: #ff3b30; max-width: 40px; }
         
         .chat-container {
             flex: 1;
@@ -78,29 +78,35 @@
         .user { background-color: var(--btn-color); color: white; align-self: flex-end; }
         @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
         
-        .typing-indicator {
+        /* 🌟 НОВА АНІМАЦІЯ ЗІРКИ */
+        .star-indicator {
             display: flex;
-            gap: 4px;
-            padding: 12px 15px;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
             background-color: var(--panel-bg);
-            align-self: flex-start;
-            border-radius: 10px;
-            animation: fadeIn 0.3s ease forwards;
-        }
-        .dot {
-            width: 8px;
-            height: 8px;
-            background-color: var(--text-color);
             border-radius: 50%;
-            opacity: 0.4;
-            animation: pulse 1.2s infinite ease-in-out;
+            align-self: flex-start;
+            animation: spin 2s linear infinite; /* Зірка просто крутиться, поки ШІ думає */
+            transition: all 0.5s ease-in-out;
         }
-        .dot:nth-child(2) { animation-delay: 0.2s; }
-        .dot:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes pulse {
-            0%, 100% { opacity: 0.4; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.2); }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
+        
+        /* Ефект польоту зірки, коли ШІ додумав */
+        .star-indicator.fly-away {
+            animation: flyOut 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        @keyframes flyOut {
+            0% { transform: scale(1) translate(0, 0) rotate(0deg); opacity: 1; }
+            40% { transform: scale(1.4) translate(10px, -10px) rotate(180deg); opacity: 0.9; }
+            100% { transform: scale(0) translate(150px, -150px) rotate(720deg); opacity: 0; }
+        }
+
         .bottom-panel {
             padding: 10px;
             background-color: var(--panel-bg);
@@ -145,7 +151,6 @@
 
         let isAiThinking = false;
 
-        // Завантажуємо історію при старті
         window.onload = function() {
             loadChatHistory();
         };
@@ -160,16 +165,11 @@
             }
         }
 
-        // Функція ПОВНОГО очищення чату
         function clearChat() {
-            if (isAiThinking) return; // Не дозволяємо чистити чат, поки ШІ відповідає
-            
+            if (isAiThinking) return;
             if (confirm("Ви впевнені, що хочете очистити всю історію чату?")) {
-                // Видаляємо все з пам'яті браузера
                 localStorage.removeItem('saved_chat_html');
                 localStorage.removeItem('dify_conversation_id');
-                
-                // Скидаємо екран чату до початкового стану
                 const chat = document.getElementById('chat');
                 chat.innerHTML = `<div class="message bot">Історію успішно очищено! Про що хочеш поговорити тепер? 🚀</div>`;
             }
@@ -188,17 +188,16 @@
             appendMessage(text, 'user');
             input.value = '';
 
-            // Блокуємо елементи інтерфейсу
             isAiThinking = true;
             input.disabled = true;
             sendBtn.disabled = true;
-            clearBtn.disabled = true; // Блокуємо і кнопку очищення під час запиту
+            clearBtn.disabled = true;
             input.placeholder = "ШІ думає над відповіддю...";
 
-            showTypingIndicator();
+            showStarIndicator(); // Показуємо крутну зірочку
 
             // ⚠️ ВСТАВТЕ СЮДИ ВАШ КЛЮЧ З DIFY (який починається на app-...)
-            const DIFY_API_KEY = "app-kOUTSfhYF6yKO0Ibb7B3d3Nf"; 
+            const DIFY_API_KEY = "ВСТАВТЕ_СЮДИ_ВАШ_КЛЮЧ_ВІД_DIFY"; 
 
             const savedConversationId = localStorage.getItem('dify_conversation_id') || "";
 
@@ -219,7 +218,9 @@
                 });
                 
                 const data = await response.json();
-                removeTypingIndicator();
+                
+                // Запускаємо політ зірки і чекаємо, поки вона полетить, ПЕРЕД тим як вивести текст
+                await flyAndRemoveStar();
                 
                 if (data.conversation_id) {
                     localStorage.setItem('dify_conversation_id', data.conversation_id);
@@ -227,10 +228,9 @@
 
                 appendMessage(data.answer || "Помилка відповіді від ШІ", 'bot');
             } catch (e) {
-                removeTypingIndicator();
+                await flyAndRemoveStar();
                 appendMessage("Помилка зв'язку з ШІ", 'bot');
             } finally {
-                // Розблоковуємо інтерфейс
                 isAiThinking = false;
                 input.disabled = false;
                 sendBtn.disabled = false;
@@ -249,16 +249,28 @@
             saveChatHistory();
         }
 
-        function showTypingIndicator() {
+        // Показуємо зірочку, що обертається
+        function showStarIndicator() {
             const chat = document.getElementById('chat');
-            const indicatorHtml = `<div class="typing-indicator" id="typingIndicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+            const indicatorHtml = `<div class="star-indicator" id="typingIndicator">✨</div>`;
             chat.insertAdjacentHTML('beforeend', indicatorHtml);
             chat.scrollTop = chat.scrollHeight;
         }
 
-        function removeTypingIndicator() {
-            const indicator = document.getElementById('typingIndicator');
-            if (indicator) indicator.remove();
+        // Красивий ефект польоту та видалення зірки
+        function flyAndRemoveStar() {
+            return new Promise((resolve) => {
+                const indicator = document.getElementById('typingIndicator');
+                if (indicator) {
+                    indicator.classList.add('fly-away'); // Вмикаємо анімацію польоту
+                    setTimeout(() => {
+                        indicator.remove(); // Видаляємо елемент після закінчення польоту (600мс)
+                        resolve();
+                    }, 600);
+                } else {
+                    resolve();
+                }
+            });
         }
 
         function saveChatHistory() {
