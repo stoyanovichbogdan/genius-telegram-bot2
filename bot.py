@@ -1,58 +1,36 @@
 import os
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
-from flask import Flask, request, jsonify
-import requests
-import threading
 
-# Налаштування токенів
+# Отримуємо токен з налаштувань Railway
 TELEGRAM_TOKEN = os.getenv("BOT_TOKEN")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY") # Цю змінну додамо на Railway
-
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
-# Посилання на ваш GitHub Pages (змінюємо хвостик для скидання кешу)
-WEBAPP_URL = "https://stoyanovichbogdan.github.io/genius-telegram-bot2/?v=4"
+# Посилання на ваш GitHub Pages (змінюємо цифру v=5, щоб Telegram точно оновив кеш сайту)
+WEBAPP_URL = "https://stoyanovichbogdan.github.io/genius-telegram-bot2/?v=5"
 
-app = Flask(__name__)
+@bot.message_handler(commands=['start'])
+def start_command(message):
+    markup = InlineKeyboardMarkup()
+    webapp_button = InlineKeyboardButton(
+        text="🚀 Відкрити ШІ-Вікно", 
+        web_app=WebAppInfo(url=WEBAPP_URL)
+    )
+    markup.add(webapp_button)
+    
+    welcome_text = (
+        "👋 Привіт!\n"
+        "Натисни кнопку нижче, щоб відкрити оновлений ШІ-чат на базі Dify.ai.\n"
+        "Тепер усе працює з анімаціями та відправкою на Enter! ✨"
+    )
+    bot.send_message(message.chat.id, welcome_text, reply_markup=markup)
 
-@app.route('/api/chat', methods=['POST'])
-def chat_endpoint():
-    try:
-        data = request.json
-        user_text = data.get("question", "")
-        
-        if not user_text:
-            return jsonify({"text": "Порожній запит"}), 400
-            
-        # Запит до безкоштовного ШІ через Groq API (модель Llama 3)
-        headers = {
-            "Authorization": f"Bearer {GROQ_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "model": "llama3-8b-8192",
-            "messages": [{"role": "user", "content": user_text}]
-        }
-        
-        response = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers)
-        response_data = response.json()
-        
-        ai_text = response_data['choices'][0]['message']['content']
-        return jsonify({"text": ai_text})
-        
-    except Exception as e:
-        return jsonify({"text": f"Помилка сервера ШІ: {str(e)}"}), 500
-
-def run_bot():
+if __name__ == "__main__":
+    # Очищаємо застряглі вебхуки, якщо вони були
     try:
         bot.delete_webhook(drop_pending_updates=True)
     except:
         pass
-    print("🤖 Бот успішно запущений!")
+        
+    print("🤖 Бот успішно запущений без зайвих модулів!")
     bot.infinity_polling()
-
-if __name__ == "__main__":
-    threading.Thread(target=run_bot).start()
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
