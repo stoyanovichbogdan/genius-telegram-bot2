@@ -12,7 +12,7 @@ bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
 # ⚠️ ВСТАВТЕ СЮДИ ВАШЕ ПОСИЛАННЯ, ЯКЕ ВИЙШЛО ПІСЛЯ УКЛЮЧЕННЯ GITHUB PAGES
 # Приклад: "https://bogdan25.github.io/genius-bot/"
-WEBAPP_URL = "https://ТВОЄ_ІМЯ_НА_GITHUB.github.io/НАЗВА_РЕПОЗИТОРІЮ/"
+WEBAPP_URL = "https://stoyanovichbogdan.github.io/genius-telegram-bot2/"
 
 @bot.message_handler(commands=['start'])
 def start_command(message):
