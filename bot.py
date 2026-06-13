@@ -4,7 +4,7 @@ import telebot
 
 # ================= НАЛАШТУВАННЯ =================
 # Бот спочатку шукає токен у змінних Railway, якщо ні — бере ваш текст
-TELEGRAM_TOKEN = os.getenv("BOT_TOKEN", "ТУТ_ТВІЙ_ТОКЕН_ЯКЩО_НЕ_ЧЕРЕЗ_VARIABLES")
+TELEGRAM_TOKEN = os.getenv("BOT_TOKEN", "8932957182:AAFY-nyjA9uyZ6oyVBMX24O7E8dRh5uRg5Q")
 
 FLOWISE_API_URL = "https://cloud.flowiseai.com/api/v1/prediction/bcbe9834-1547-4656-b4a0-d3446e14f571"
 # ================================================
