@@ -20,8 +20,7 @@ def start_command(message):
     
     welcome_text = (
         "👋 Привіт!\n"
-        "Натисни кнопку нижче, щоб відкрити оновлений ШІ-чат на базі Dify.ai.\n"
-        "Тепер усе працює з анімаціями та відправкою на Enter! ✨"
+        "Натисни кнопку нижче, щоб відкрити ШІ"
     )
     bot.send_message(message.chat.id, welcome_text, reply_markup=markup)
 
